@@ -54,3 +54,21 @@ ${_original}
     endforeach ()
     file(WRITE "${SOURCE_DIR}/src/funchook.c" "${_content}")
 endif ()
+
+file(READ "${SOURCE_DIR}/src/funchook_internal.h" _content)
+if (NOT _content MATCHES "FUNCHOOK_RUNTIME_PAGE_SIZE")
+    string(REPLACE
+        [=[#undef PAGE_SIZE
+#define PAGE_SIZE 0x1000 /* 4k */]=]
+        [=[/* FUNCHOOK_RUNTIME_PAGE_SIZE */
+#ifdef _WIN32
+#undef PAGE_SIZE
+#define PAGE_SIZE 0x1000 /* 4k */
+#else
+#include <unistd.h>
+#undef PAGE_SIZE
+#define PAGE_SIZE ((size_t)sysconf(_SC_PAGE_SIZE))
+#endif]=]
+        _content "${_content}")
+    file(WRITE "${SOURCE_DIR}/src/funchook_internal.h" "${_content}")
+endif ()
